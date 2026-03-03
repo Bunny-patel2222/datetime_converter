@@ -29,14 +29,13 @@ A modern, high-performance web application designed to convert date and time bet
 ### Installation
 1. Navigate to the project directory:
    ```bash
-   cd /home/bunny/DevOps/Project/datetime_convertor
+   cd /Project/datetime_convertor
    ```
 2. Install dependencies:
    ```bash
    python3 -m pip install -r requirements.txt
    ```
-   *Note: On some systems, you may need to use `--break-system-packages` if installing outside a virtual environment.*
-
+ 
 ## 🌐 Application Architecture
 
 ### Frontend-Backend Connectivity
@@ -60,10 +59,7 @@ While currently using default configurations, the app is prepared for standard F
 The backend implements a **Pre-loading Timezone Cache** on startup. This computes UTC offsets for all 600+ zones once, preventing 30s+ response delays during per-request computation.
 
 ### Process Management
-To run the server in the background:
-```bash
-python3 app.py > server.log 2>&1 &
-```
+
 To stop the server:
 ```bash
 fuser -k 5000/tcp
