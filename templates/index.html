@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DateTime Zone Converter</title>
+
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Roboto+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <!-- Choices.js for searchable dropdowns -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+  <!-- Flatpickr datetime picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-deep: #080c14;
+      --bg-surface: #0d1526;
+      --bg-card: #111927;
+      --bg-elevated: #18273d;
+      --accent: #4f8ef7;
+      --accent-glow: #4f8ef744;
+      --accent-2: #9b7ff7;
+      --accent-2-glow: #9b7ff733;
+      --success: #34d399;
+      --text-primary: #e8edf7;
+      --text-secondary: #8a9bbf;
+      --text-muted: #4a5878;
+      --border: #1e2f4a;
+      --border-bright: #2a4068;
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow-card: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(79, 142, 247, 0.06);
+      --shadow-btn: 0 8px 32px rgba(79, 142, 247, 0.35);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 24px 16px 60px;
+      overflow-x: hidden;
+    }
+
+    /* ─── Animated Background ───────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% -10%, #1a3a6a22 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, #6b1fa222 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, #0a1a3422 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      pointer-events: none;
+      animation: float 8s ease-in-out infinite;
+      z-index: 0;
+    }
+
+    .orb-1 {
+      width: 400px;
+      height: 400px;
+      background: #4f8ef7;
+      top: -100px;
+      left: -100px;
+      animation-delay: 0s;
+    }
+
+    .orb-2 {
+      width: 300px;
+      height: 300px;
+      background: #9b7ff7;
+      bottom: -80px;
+      right: -80px;
+      animation-delay: 3s;
+    }
+
+    .orb-3 {
+      width: 200px;
+      height: 200px;
+      background: #34d399;
+      top: 50%;
+      left: 60%;
+      animation-delay: 5s;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
+
+      33% {
+        transform: translate(20px, -30px) scale(1.05);
+      }
+
+      66% {
+        transform: translate(-15px, 20px) scale(0.95);
+      }
+    }
+
+    /* ─── Layout ────────────────────────────────────────────── */
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 720px;
+    }
+
+    /* ─── Header ────────────────────────────────────────────── */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: slideDown 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 8px 32px var(--accent-glow), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      margin-bottom: 18px;
+    }
+
+    .header-icon .material-icons-round {
+      font-size: 32px;
+      color: #fff;
+    }
+
+    .header h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      background: linear-gradient(135deg, #e8edf7 0%, var(--accent) 50%, var(--accent-2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    /* ─── Card ──────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      box-shadow: var(--shadow-card);
+      animation: cardIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
+      opacity: 0.7;
+    }
+
+    @keyframes cardIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* ─── Section Label ─────────────────────────────────────── */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .section-label .material-icons-round {
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    /* ─── Form ──────────────────────────────────────────────── */
+    .form-grid {
+      display: grid;
+      gap: 28px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── DateTime Input ────────────────────────────────────── */
+    /* ─── DEFINITIVE Date Picker Fix (Custom Display Div) ─── */
+    .custom-date-display {
+      width: 100%;
+      background-color: #18273d !important;
+      color: #e8edf7 !important;
+      border: 1.5px solid #2a4068 !important;
+      border-radius: 12px !important;
+      padding: 14px 16px 14px 54px !important;
+      font-family: 'Inter', sans-serif !important;
+      font-size: 1rem !important;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5) !important;
+      cursor: pointer;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    .datetime-wrapper:hover .custom-date-display {
+      border-color: #4f8ef766;
+    }
+
+    .datetime-wrapper:active .custom-date-display {
+      border-color: #4f8ef7;
+      box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.2), inset 0 2px 5px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .datetime-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .datetime-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4f8ef7;
+      font-size: 22px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Flatpickr calendar dark theme */
+    .flatpickr-calendar {
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border-bright) !important;
+      border-radius: var(--radius-md) !important;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9), 0 0 0 1px var(--border-bright) !important;
+      font-family: 'Inter', sans-serif !important;
+      color: var(--text-primary) !important;
+      width: 320px !important;
+      margin-top: 10px !important;
+    }
+
+    /* Ensure popover is positioned correctly when using static: true */
+    .flatpickr-calendar.static {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 999;
+    }
+
+    .flatpickr-innerContainer {
+      padding: 4px;
+    }
+
+    .flatpickr-day {
+      color: var(--text-primary) !important;
+      border-radius: var(--radius-sm) !important;
+      margin: 2px !important;
+    }
+
+    .flatpickr-day:hover {
+      background: var(--bg-surface) !important;
+      border-color: var(--accent) !important;
+    }
+
+    .flatpickr-day.selected {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+      border-color: transparent !important;
+      color: #fff !important;
+      box-shadow: 0 4px 12px var(--accent-glow) !important;
+    }
+
+    .flatpickr-day.today {
+      border-color: var(--accent-2) !important;
+      color: var(--accent-2) !important;
+    }
+
+    .flatpickr-months {
+      background: var(--bg-card) !important;
+      border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+      padding: 8px 0 !important;
+    }
+
+    .flatpickr-month {
+      color: var(--text-primary) !important;
+    }
+
+    .flatpickr-weekday {
+      color: var(--text-muted) !important;
+      font-weight: 600 !important;
+    }
+
+    .flatpickr-current-month {
+      color: var(--text-primary) !important;
+      font-size: 1rem !important;
+    }
+
+    .flatpickr-current-month select,
+    .flatpickr-current-month input.cur-year {
+      color: var(--text-primary) !important;
+      background: transparent !important;
+      font-weight: 600 !important;
+    }
+
+    .flatpickr-prev-month,
+    .flatpickr-next-month {
+      padding: 10px !important;
+    }
+
+    .flatpickr-prev-month:hover svg,
+    .flatpickr-next-month:hover svg {
+      fill: var(--accent) !important;
+    }
+
+    .flatpickr-prev-month svg,
+    .flatpickr-next-month svg {
+      fill: var(--text-secondary) !important;
+    }
+
+    .numInputWrapper span {
+      border-color: var(--border) !important;
+    }
+
+    .numInputWrapper span:after {
+      border-color: var(--text-secondary) transparent transparent !important;
+    }
+
+    .numInputWrapper span.arrowDown:after {
+      border-color: transparent transparent var(--text-secondary) !important;
+    }
+
+    .flatpickr-time {
+      border-top: 1px solid var(--border) !important;
+      background: var(--bg-card) !important;
+      border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+      padding: 10px 0 !important;
+    }
+
+    .flatpickr-time input {
+      color: var(--text-primary) !important;
+      background: transparent !important;
+      font-weight: 600 !important;
+    }
+
+    .flatpickr-time .flatpickr-am-pm {
+      color: var(--text-primary) !important;
+      background: transparent !important;
+      font-weight: 600 !important;
+    }
+
+    .flatpickr-time input:focus,
+    .flatpickr-time .flatpickr-am-pm:focus {
+      background: var(--bg-elevated) !important;
+      border-radius: var(--radius-sm) !important;
+    }
+
+    /* ─── Timezone Row ──────────────────────────────────────── */
+    .timezone-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px;
+      align-items: end;
+    }
+
+    .swap-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 52px;
+      border: 1.5px solid var(--border-bright);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      color: var(--accent);
+      cursor: pointer;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .swap-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      box-shadow: var(--shadow-btn);
+      transform: rotate(180deg) scale(1.05);
+    }
+
+    .swap-btn .material-icons-round {
+      font-size: 20px;
+    }
+
+    /* ─── Choices.js Dark Override ──────────────────────────── */
+    .choices {
+      font-family: 'Inter', sans-serif !important;
+      font-size: 0.95rem !important;
+      margin-bottom: 0 !important;
+    }
+
+    .choices__inner {
+      background: var(--bg-elevated) !important;
+      border: 1.5px solid var(--border-bright) !important;
+      border-radius: var(--radius-md) !important;
+      color: var(--text-primary) !important;
+      padding: 8px 12px !important;
+      min-height: 52px !important;
+      display: flex;
+      align-items: center;
+    }
+
+    .choices.is-focused .choices__inner,
+    .choices.is-open .choices__inner {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 3px var(--accent-glow) !important;
+    }
+
+    .choices__list--single .choices__item {
+      color: var(--text-primary) !important;
+      padding: 4px 0 !important;
+    }
+
+    .choices__placeholder {
+      color: var(--text-muted) !important;
+    }
+
+    .choices__list--dropdown {
+      background: var(--bg-elevated) !important;
+      border: 1.5px solid var(--border-bright) !important;
+      border-radius: var(--radius-md) !important;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+      overflow: hidden;
+      z-index: 999 !important;
+    }
+
+    .choices__list--dropdown .choices__item {
+      color: var(--text-primary) !important;
+      padding: 10px 14px !important;
+    }
+
+    .choices__list--dropdown .choices__item--selectable.is-highlighted {
+      background: linear-gradient(90deg, var(--accent-glow), transparent) !important;
+      color: var(--accent) !important;
+    }
+
+    .choices__input {
+      background: var(--bg-surface) !important;
+      color: var(--text-primary) !important;
+      border: none !important;
+      border-bottom: 1.5px solid var(--border-bright) !important;
+      padding: 10px 14px !important;
+      font-family: 'Inter', sans-serif !important;
+      font-size: 0.9rem !important;
+      width: 100% !important;
+    }
+
+    .choices__input::placeholder {
+      color: var(--text-muted) !important;
+    }
+
+    .choices[data-type*="select-one"] .choices__inner::after {
+      border-color: var(--text-secondary) transparent transparent !important;
+    }
+
+    .choices[data-type*="select-one"].is-open .choices__inner::after {
+      border-color: var(--accent) transparent transparent !important;
+    }
+
+    /* ─── Convert Button ────────────────────────────────────── */
+    .btn-convert {
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+      box-shadow: var(--shadow-btn);
+    }
+
+    .btn-convert:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(79, 142, 247, 0.5);
+    }
+
+    .btn-convert:active {
+      transform: translateY(0);
+    }
+
+    /* Ripple effect */
+    .btn-convert::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.5s, height 0.5s, opacity 0.5s;
+      opacity: 0;
+    }
+
+    .btn-convert.ripple::after {
+      width: 300px;
+      height: 300px;
+      opacity: 0;
+      transition: 0s;
+    }
+
+    .btn-convert .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .btn-convert.loading .spinner {
+      display: block;
+    }
+
+    .btn-convert.loading .btn-text,
+    .btn-convert.loading .material-icons-round {
+      display: none;
+    }
+
+    /* ─── Divider ───────────────────────────────────────────── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 4px 0;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ─── Result Panel ──────────────────────────────────────── */
+    .result-panel {
+      display: none;
+      margin-top: 32px;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      animation: resultIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    @keyframes resultIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .result-panel.is-visible {
+      display: block;
+    }
+
+    .result-bg {
+      background: linear-gradient(135deg, #0a1f3a 0%, #150a2e 100%);
+      border: 1px solid var(--border-bright);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-bg::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+
+    .result-bg::after {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .result-original {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-original .material-icons-round {
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    .result-arrow-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .result-from-tag {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-bright);
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .result-arrow {
+      color: var(--accent);
+      font-size: 20px;
+    }
+
+    .result-main {
+      position: relative;
+      z-index: 1;
+    }
+
+    .result-time {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff 0%, var(--accent) 40%, var(--accent-2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+      animation: shimmer 3s ease-in-out infinite;
+      background-size: 200% auto;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 0% center;
+      }
+
+      50% {
+        background-position: 100% center;
+      }
+
+      100% {
+        background-position: 0% center;
+      }
+    }
+
+    .result-date {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 16px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .result-tz-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--accent-glow), var(--accent-2-glow));
+      border: 1px solid var(--border-bright);
+      border-radius: 30px;
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .result-tz-badge .material-icons-round {
+      font-size: 16px;
+      color: var(--success);
+    }
+
+    .result-raw {
+      margin-top: 20px;
+      padding: 12px 16px;
+      background: var(--bg-deep);
+      border-radius: var(--radius-sm);
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── Error state ───────────────────────────────────────── */
+    .error-panel {
+      display: none;
+      background: #2a0a0a;
+      border: 1px solid #6b1a1a;
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      color: #ff6b6b;
+      font-size: 0.9rem;
+      margin-top: 16px;
+      align-items: center;
+      gap: 10px;
+      animation: resultIn 0.4s ease both;
+    }
+
+    .error-panel.is-visible {
+      display: flex;
+    }
+
+    .error-panel .material-icons-round {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* ─── Footer ────────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      margin-top: 32px;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      animation: fadeIn 1s ease 0.5s both;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* ─── Responsive ────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .card {
+        padding: 24px 18px;
+      }
+
+      .timezone-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .swap-btn {
+        width: 100%;
+        height: 44px;
+      }
+
+      .swap-btn:hover {
+        transform: rotate(90deg) scale(1.05);
+      }
+
+      .result-bg {
+        padding: 24px 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-icon">
+        <span class="material-icons-round">travel_explore</span>
+      </div>
+      <h1>TimeZone Converter</h1>
+      <p>Convert date &amp; time across any timezone in the world</p>
+    </header>
+
+    <!-- Main Card -->
+    <div class="card">
+      <div class="form-grid">
+
+        <!-- Date & Time Picker -->
+        <div class="form-group">
+          <div class="section-label">
+            <span class="material-icons-round">schedule</span>
+            Date &amp; Time
+          </div>
+          <div class="datetime-wrapper">
+            <span class="material-icons-round datetime-icon">event</span>
+            <div id="datetimeDisplay" class="custom-date-display">Select date &amp; time...</div>
+            <!-- Keep input in DOM but visually hidden so Flatpickr can anchor to it -->
+            <input type="text" id="datetimePicker"
+              style="position: absolute; bottom: 0; left: 50%; width: 1px; height: 1px; opacity: 0; pointer-events: none;" />
+          </div>
+        </div>
+
+        <!-- Timezone Selectors -->
+        <div class="form-group">
+          <div class="section-label">
+            <span class="material-icons-round">swap_horiz</span>
+            Timezone Conversion
+          </div>
+          <div class="timezone-grid">
+            <div>
+              <div class="section-label" style="margin-bottom:8px;">
+                <span class="material-icons-round">flight_takeoff</span>
+                From
+              </div>
+              <select id="fromTz"></select>
+            </div>
+
+            <button class="swap-btn" id="swapBtn" title="Swap timezones">
+              <span class="material-icons-round">swap_horiz</span>
+            </button>
+
+            <div>
+              <div class="section-label" style="margin-bottom:8px;">
+                <span class="material-icons-round">flight_land</span>
+                To
+              </div>
+              <select id="toTz"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button class="btn-convert" id="convertBtn">
+          <span class="material-icons-round btn-icon">autorenew</span>
+          <span class="btn-text">Convert Time</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+
+      <!-- Error -->
+      <div class="error-panel" id="errorPanel">
+        <span class="material-icons-round">error_outline</span>
+        <span id="errorText">Something went wrong.</span>
+      </div>
+    </div>
+
+    <!-- Result Panel -->
+    <div class="result-panel" id="resultPanel">
+      <div class="result-bg">
+        <div class="result-original" id="originalLine">
+          <span class="material-icons-round">info</span>
+          <span></span>
+        </div>
+
+        <div class="result-arrow-row">
+          <span class="result-from-tag" id="fromTag">—</span>
+          <span class="material-icons-round result-arrow">arrow_forward</span>
+          <span class="result-from-tag" id="toTag" style="border-color:var(--accent);color:var(--accent)">—</span>
+        </div>
+
+        <div class="result-main">
+          <div class="result-time" id="resultTime">—</div>
+          <div class="result-date" id="resultDate">—</div>
+          <div class="result-tz-badge">
+            <span class="material-icons-round">language</span>
+            <span id="resultTzLabel">—</span>
+          </div>
+          <div class="result-raw" id="resultRaw">—</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      Powered by Python / Flask &middot; pytz &middot; All timezones included
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+  <script>
+    // ─── Init Flatpickr ─────────────────────────────────────────────
+    const picker = flatpickr('#datetimePicker', {
+      enableTime: true,
+      dateFormat: 'Y-m-dTH:i',
+      defaultDate: new Date(),
+      disableMobile: false,
+      monthSelectorType: 'static',
+      animate: true,
+      // Positioning
+      static: true,
+      position: 'auto',
+      onChange: function (selectedDates, dateStr, instance) {
+        updateDisplay(selectedDates);
+      },
+      onReady: function (selectedDates, dateStr, instance) {
+        updateDisplay(selectedDates);
+      }
+    });
+
+    function updateDisplay(selectedDates) {
+      const display = document.getElementById('datetimeDisplay');
+      if (selectedDates && selectedDates.length > 0) {
+        const opt = {
+          weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', hour12: true
+        };
+        display.textContent = selectedDates[0].toLocaleString('en-US', opt).replace(/,/g, '');
+      }
+    }
+
+    // Trigger picker when clicking the wrapper or display
+    document.querySelector('.datetime-wrapper').addEventListener('click', () => {
+      picker.open();
+    });
+
+    // ─── Load Timezones from Backend ────────────────────────────────
+    let fromChoices, toChoices;
+
+    async function loadTimezones() {
+      try {
+        const resp = await fetch('/api/timezones');
+        const data = await resp.json();
+
+        const fromSel = document.getElementById('fromTz');
+        const toSel = document.getElementById('toTz');
+
+        data.forEach(tz => {
+          [fromSel, toSel].forEach(sel => {
+            const opt = document.createElement('option');
+            opt.value = tz.id;
+            opt.textContent = tz.label;
+            sel.appendChild(opt);
+          });
+        });
+
+        const sharedOpts = {
+          searchEnabled: true,
+          searchPlaceholderValue: 'Type to search timezone...',
+          itemSelectText: '',
+          shouldSort: false,
+          searchResultLimit: 30,
+          searchFields: ['label', 'value'],
+          noResultsText: 'No timezone found',
+          placeholder: true,
+          placeholderValue: 'Select timezone',
+        };
+
+        fromChoices = new Choices('#fromTz', sharedOpts);
+        toChoices = new Choices('#toTz', sharedOpts);
+
+        // Defaults: UTC (from) and local tz if we can find it (to)
+        const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setChoiceValue(fromChoices, 'UTC');
+        setChoiceValue(toChoices, userTz || 'Asia/Kolkata');
+
+      } catch (err) {
+        console.error('Failed to load timezones:', err);
+      }
+    }
+
+    function setChoiceValue(choicesInstance, value) {
+      try { choicesInstance.setChoiceByValue(value); } catch (_) { }
+    }
+
+    loadTimezones();
+
+    // ─── Swap Timezones ─────────────────────────────────────────────
+    document.getElementById('swapBtn').addEventListener('click', () => {
+      const fromVal = fromChoices.getValue(true);
+      const toVal = toChoices.getValue(true);
+      setChoiceValue(fromChoices, toVal);
+      setChoiceValue(toChoices, fromVal);
+    });
+
+    // ─── Convert ────────────────────────────────────────────────────
+    document.getElementById('convertBtn').addEventListener('click', async (e) => {
+      const btn = document.getElementById('convertBtn');
+      const errorPanel = document.getElementById('errorPanel');
+      const resultPanel = document.getElementById('resultPanel');
+
+      // Ripple
+      btn.classList.add('ripple');
+      setTimeout(() => btn.classList.remove('ripple'), 600);
+
+      // Validate inputs
+      const dtVal = picker.input.value;
+      const fromTz = fromChoices.getValue(true);
+      const toTz = toChoices.getValue(true);
+
+      // Hide previous results/errors
+      errorPanel.classList.remove('is-visible');
+      resultPanel.classList.remove('is-visible');
+
+      if (!dtVal) {
+        showError('Please pick a date and time first.');
+        return;
+      }
+      if (!fromTz) {
+        showError('Please select a FROM timezone.');
+        return;
+      }
+      if (!toTz) {
+        showError('Please select a TO timezone.');
+        return;
+      }
+
+      // Loading state
+      btn.classList.add('loading');
+
+      try {
+        const resp = await fetch('/api/convert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ datetime: dtVal, from_tz: fromTz, to_tz: toTz }),
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok || data.error) {
+          showError(data.error || 'Conversion failed.');
+          return;
+        }
+
+        displayResult(data);
+
+      } catch (err) {
+        showError('Network error. Please try again.');
+      } finally {
+        btn.classList.remove('loading');
+      }
+    });
+
+    // ─── Display Result ─────────────────────────────────────────────
+    function displayResult(data) {
+      const resultPanel = document.getElementById('resultPanel');
+
+      // Parse time vs date from "Wednesday, February 19, 2026  10:30 PM"
+      const parts = data.converted_datetime.split(/\s{2,}/);
+      let timeStr = data.converted_datetime;
+      let dateStr = '';
+      if (parts.length >= 2) {
+        dateStr = parts[0];      // "Wednesday, February 19, 2026"
+        timeStr = parts[1];      // "10:30 PM"
+      }
+
+      document.getElementById('resultTime').textContent = timeStr;
+      document.getElementById('resultDate').textContent = dateStr;
+      document.getElementById('resultTzLabel').textContent = data.timezone_label;
+      document.getElementById('resultRaw').textContent = data.converted_datetime_24h + ' ' + data.utc_offset;
+
+      document.getElementById('fromTag').textContent = data.original_timezone_label.split('(')[0].trim();
+      document.getElementById('toTag').textContent = data.timezone_label.split('(')[0].trim();
+
+      const origLine = document.querySelector('#originalLine span:last-child');
+      origLine.textContent = `From: ${data.original_datetime}  ·  ${data.original_timezone_label}`;
+
+      // Animate in
+      resultPanel.classList.remove('is-visible');
+      void resultPanel.offsetWidth; // reflow
+      resultPanel.classList.add('is-visible');
+
+      // Scroll into view
+      setTimeout(() => resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    }
+
+    function showError(msg) {
+      document.getElementById('errorText').textContent = msg;
+      const ep = document.getElementById('errorPanel');
+      ep.classList.remove('is-visible');
+      void ep.offsetWidth;
+      ep.classList.add('is-visible');
+    }
+  </script>
+</body>
+
+</html>
